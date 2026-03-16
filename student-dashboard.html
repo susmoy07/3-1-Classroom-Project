@@ -9,10 +9,7 @@
 <body class="cs-shell" data-page="student-dashboard">
   <header class="cs-appbar" role="banner">
     <div class="cs-appbar-inner">
-      <div class="cs-brand" aria-label="ClassSphere">
-        <a class="cs-avatar" href="user-profile.html" title="Back to home" aria-label="Back to home"><img src="assets/default-avatar.png" alt="ClassSphere logo" class="cs-logo-small"></a>
-        <span class="cs-brand-text">ClassSphere</span>
-      </div>
+      
 
       <div class="cs-appbar-actions">
         <button class="cs-icon-btn" type="button" id="joinClassBtn" aria-haspopup="dialog" aria-controls="joinClassModal" title="Join class">
@@ -20,6 +17,14 @@
           <span class="cs-icon-btn-label">Join class</span>
         </button>
       </div>
+
+      <div class="cs-brand" aria-label="ClassSphere">
+        <button class="cs-avatar profile-settings-btn" id="profileSettingsBtn" title="Profile Settings">
+        <img src="assets/default-avatar.png" alt="Profile" class="cs-logo-small">
+        </button>
+        <span class="cs-brand-text"></span>
+      </div>
+
     </div>
   </header>
 
@@ -68,7 +73,42 @@
       </form>
     </div>
   </div>
+<div id="profileSidebar" class="profile-sidebar">
 
+  <div class="profile-sidebar-content">
+
+    <h2>Profile Settings</h2>
+
+    <img src="assets/default-avatar.png" class="profile-sidebar-avatar">
+    <div class="profile-avatar-wrapper">
+    <img id="sidebarProfileImage" src="assets/default-avatar.png" alt="Profile Avatar">
+    <button class="change-avatar-btn" id="changeAvatarBtn">Change Profile Picture</button>
+    </div>
+    <p id="sidebarName">User Name</p>
+    <p id="sidebarEmail">email@example.com</p>
+
+    <form id="changePasswordForm">
+
+      <label>Current Password</label>
+      <input type="password" required>
+
+      <label>New Password</label>
+      <input type="password" required>
+
+      <label>Confirm Password</label>
+      <input type="password" required>
+
+      <button type="submit" class="btn change-password-btn">
+        Change Password
+      </button>
+
+    </form>
+
+    <button class="btn logout-btn">Logout</button>
+
+  </div>
+
+</div>
   <script src="script.js"></script>
 </body>
 </html>

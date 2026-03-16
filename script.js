@@ -2271,57 +2271,64 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* =========================================================
-   User Profile Page
+   User Profile Sidebar with Change Profile Picture
    ========================================================= */
 
 const ClassSphereUserProfile = (() => {
-  function loadUserProfile() {
+  // ----------------- Load User Profile -----------------
+  function loadUserProfile(sidebar = false) {
     const user = ClassSphereAuth.getUser();
     if (!user) {
       window.location.href = 'login.html';
       return;
     }
 
-    const profileImage = document.getElementById('profileImage');
-    const profileName = document.getElementById('profileName');
-    const profileEmail = document.getElementById('profileEmail');
+    // Sidebar elements
+    const profileImage = sidebar
+      ? document.querySelector('#profileSidebar img.profile-sidebar-avatar')
+      : document.getElementById('profileImage');
+    const profileName = sidebar
+      ? document.getElementById('sidebarName')
+      : document.getElementById('profileName');
+    const profileEmail = sidebar
+      ? document.getElementById('sidebarEmail')
+      : document.getElementById('profileEmail');
     const profileRole = document.getElementById('profileRole');
-    const fullNameInput = document.getElementById('fullName');
-    const emailInput = document.getElementById('email');
 
-    if (profileImage && user.profilePath) {
-      profileImage.src = user.profilePath;
-    }
+    if (profileImage && user.profilePath) profileImage.src = user.profilePath;
     if (profileName) profileName.textContent = user.fullName || 'User';
     if (profileEmail) profileEmail.textContent = user.email || '';
-    if (profileRole) profileRole.textContent = user.role === 'teacher' ? 'Teacher' : 'Student';
-    if (fullNameInput) fullNameInput.value = user.fullName || '';
-    if (emailInput) emailInput.value = user.email || '';
+    if (profileRole) profileRole.textContent =
+      user.role === 'teacher' ? 'Teacher' : 'Student';
   }
 
-  async function changePassword() {
-    const currentPasswordInput = document.getElementById('currentPassword');
-    const newPasswordInput = document.getElementById('newPassword');
-    const confirmPasswordInput = document.getElementById('confirmPassword');
-    const passwordError = document.getElementById('passwordError');
+  // ----------------- Change Password -----------------
+  async function changePassword(formId) {
+    const form = document.getElementById(formId);
+    if (!form) return;
 
-    if (!currentPasswordInput || !newPasswordInput || !confirmPasswordInput || !passwordError) return;
+    const currentPasswordInput = form.querySelector('input[name="currentPassword"]');
+    const newPasswordInput = form.querySelector('input[name="newPassword"]');
+    const confirmPasswordInput = form.querySelector('input[name="confirmPassword"]');
+    const passwordError = form.querySelector('.form-error');
+
+    if (!currentPasswordInput || !newPasswordInput || !confirmPasswordInput) return;
 
     const currentPassword = currentPasswordInput.value;
     const newPassword = newPasswordInput.value;
     const confirmPassword = confirmPasswordInput.value;
 
     if (!currentPassword || !newPassword) {
-      passwordError.textContent = 'Current and new password are required.';
+      if (passwordError) passwordError.textContent = 'Current and new password are required.';
       return;
     }
     if (newPassword !== confirmPassword) {
-      passwordError.textContent = 'New passwords do not match.';
+      if (passwordError) passwordError.textContent = 'New passwords do not match.';
       return;
     }
 
     try {
-      passwordError.textContent = '';
+      if (passwordError) passwordError.textContent = '';
       const res = await ClassSphereAuth.authFetch('/api/auth/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2330,7 +2337,7 @@ const ClassSphereUserProfile = (() => {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        passwordError.textContent = data.error || 'Failed to change password.';
+        if (passwordError) passwordError.textContent = data.error || 'Failed to change password.';
         return;
       }
 
@@ -2339,55 +2346,100 @@ const ClassSphereUserProfile = (() => {
       newPasswordInput.value = '';
       confirmPasswordInput.value = '';
     } catch {
-      passwordError.textContent = 'Unable to reach server. Please try again.';
+      if (passwordError) passwordError.textContent = 'Unable to reach server. Please try again.';
     }
   }
 
+  // ----------------- Logout -----------------
   function logout() {
     ClassSphereAuth.clearAuth();
     window.location.href = 'login.html';
   }
 
-  function init() {
-    const page = document.body && document.body.getAttribute('data-page');
-    if (page !== 'user-profile') return;
+  // ----------------- Change Profile Picture -----------------
+  function initProfilePicture() {
+    const changeAvatarBtn = document.getElementById('changeAvatarBtn');
+    const sidebarAvatar = document.querySelector('#profileSidebar img.profile-sidebar-avatar');
 
+    if (!changeAvatarBtn || !sidebarAvatar) return;
+
+    changeAvatarBtn.addEventListener('click', () => {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'image/*';
+      fileInput.click();
+
+      fileInput.addEventListener('change', async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          sidebarAvatar.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        // TODO: Upload file to backend API for permanent storage
+        // Example:
+        // const formData = new FormData();
+        // formData.append('avatar', file);
+        // await fetch('/api/user/upload-avatar', { method: 'POST', body: formData });
+      });
+    });
+  }
+
+  // ----------------- Init -----------------
+  function init() {
     const user = ClassSphereAuth.getUser();
     if (!user) {
       window.location.href = 'login.html';
       return;
     }
 
-    loadUserProfile();
+    // Load sidebar profile
+    loadUserProfile(true);
 
-    const backToDashboard = document.getElementById('backToDashboard');
-    if (backToDashboard) {
-      backToDashboard.addEventListener('click', () => {
-        const dest = user.role === 'teacher' ? 'teacher-dashboard.html' : 'student-dashboard.html';
-        window.location.href = dest;
+    // Profile sidebar toggle
+    const profileBtn = document.getElementById('profileSettingsBtn');
+    const sidebar = document.getElementById('profileSidebar');
+
+    if (profileBtn && sidebar) {
+      profileBtn.addEventListener('click', () => {
+        sidebar.classList.add('active');
+        loadUserProfile(true);
+      });
+
+      sidebar.addEventListener('mouseleave', () => {
+        sidebar.classList.remove('active');
       });
     }
 
+    // Password form
     const changePasswordForm = document.getElementById('changePasswordForm');
     if (changePasswordForm) {
       changePasswordForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        await changePassword();
+        await changePassword('changePasswordForm');
       });
     }
 
-    const logoutBtn = document.getElementById('logoutBtn');
+    // Logout button
+    const logoutBtn = sidebar.querySelector('.logout-btn');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', () => {
         const ok = confirm('Are you sure you want to logout?');
         if (ok) logout();
       });
     }
+
+    // Profile picture button
+    initProfilePicture();
   }
 
   return { init };
 })();
 
+// ----------------- Initialize -----------------
 document.addEventListener('DOMContentLoaded', () => {
   ClassSphereUserProfile.init();
 });
